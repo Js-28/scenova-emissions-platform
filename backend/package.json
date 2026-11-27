@@ -3,13 +3,13 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-"scripts": {
-  "dev": "tsx watch src/server.ts",
-  "build": "tsc",
-  "start": "node dist/server.js",
-  "test": "vitest run",
-  "test:watch": "vitest"
-},
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "test": "vitest run --no-file-parallelism",
+    "test:watch": "vitest"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",

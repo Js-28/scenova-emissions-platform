@@ -1,6 +1,6 @@
-import type { Request, Response, NextFunction } from 'express';
-import jwt, { type JwtPayload } from 'jsonwebtoken';
-import { env } from '../config/env';
+import type { Request, Response, NextFunction } from "express";
+import jwt, { type JwtPayload } from "jsonwebtoken";
+import { env } from "../config/env";
 
 interface TenantJwtPayload extends JwtPayload {
   tenant_id: string;
@@ -15,7 +15,7 @@ export function authenticateToken(
 
   if (!authorization) {
     res.status(401).json({
-      error: 'Authentication required.',
+      error: "Authentication required.",
     });
     return;
   }
@@ -24,7 +24,7 @@ export function authenticateToken(
 
   if (!match) {
     res.status(401).json({
-      error: 'Invalid authorization format. Use Bearer token.',
+      error: "Invalid authorization format. Use Bearer token.",
     });
     return;
   }
@@ -33,18 +33,18 @@ export function authenticateToken(
 
   try {
     const decoded = jwt.verify(token, env.JWT_SECRET, {
-      algorithms: ['HS256'],
+      algorithms: ["HS256"],
     });
 
     if (
-      typeof decoded !== 'object' ||
+      typeof decoded !== "object" ||
       decoded === null ||
-      typeof decoded.tenant_id !== 'string' ||
+      typeof decoded.tenant_id !== "string" ||
       decoded.tenant_id.trim().length === 0 ||
-      typeof decoded.exp !== 'number'
+      typeof decoded.exp !== "number"
     ) {
       res.status(401).json({
-        error: 'Invalid authentication token.',
+        error: "Invalid authentication token.",
       });
       return;
     }
@@ -57,7 +57,7 @@ export function authenticateToken(
     next();
   } catch {
     res.status(401).json({
-      error: 'Invalid or expired authentication token.',
+      error: "Invalid or expired authentication token.",
     });
   }
 }

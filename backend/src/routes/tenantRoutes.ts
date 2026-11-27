@@ -1,41 +1,36 @@
-
-import { Router, type Request, type Response } from 'express';
-import { authenticateToken } from '../middleware/auth';
-import { withTenantTransaction } from '../utils/tenantTransaction';
+import { Router, type Request, type Response } from "express";
+import { authenticateToken } from "../middleware/auth";
+import { withTenantTransaction } from "../utils/tenantTransaction";
 
 const router = Router();
 
 // GET /api/tenant
 // Returns the authenticated tenant identity.
-router.get(
-  '/',
-  authenticateToken,
-  (req: Request, res: Response): void => {
-    if (!req.tenantId) {
-      res.status(401).json({
-        error: 'Authenticated tenant information is missing.',
-      });
-      return;
-    }
-
-    res.status(200).json({
-      tenant_id: req.tenantId,
-      message: 'Authenticated successfully',
+router.get("/", authenticateToken, (req: Request, res: Response): void => {
+  if (!req.tenantId) {
+    res.status(401).json({
+      error: "Authenticated tenant information is missing.",
     });
-  },
-);
+    return;
+  }
+
+  res.status(200).json({
+    tenant_id: req.tenantId,
+    message: "Authenticated successfully",
+  });
+});
 
 // GET /api/tenant/data
 // Demonstrates PostgreSQL Row-Level Security.
 router.get(
-  '/data',
+  "/data",
   authenticateToken,
   async (req: Request, res: Response): Promise<void> => {
     const tenantId = req.tenantId;
 
     if (!tenantId) {
       res.status(401).json({
-        error: 'Authenticated tenant information is missing.',
+        error: "Authenticated tenant information is missing.",
       });
       return;
     }
@@ -61,12 +56,12 @@ router.get(
       });
     } catch (error) {
       console.error(
-        'Tenant data query failed:',
-        error instanceof Error ? error.message : 'Unknown error',
+        "Tenant data query failed:",
+        error instanceof Error ? error.message : "Unknown error",
       );
 
       res.status(500).json({
-        error: 'Unable to retrieve tenant data.',
+        error: "Unable to retrieve tenant data.",
       });
     }
   },

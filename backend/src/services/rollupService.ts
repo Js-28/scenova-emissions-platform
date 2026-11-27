@@ -1,11 +1,10 @@
-
-import type { PoolClient } from 'pg';
-import Decimal from 'decimal.js';
+import type { PoolClient } from "pg";
+import Decimal from "decimal.js";
 
 import {
   getRollupRows,
   type RollupRow,
-} from '../repositories/rollupRepository';
+} from "../repositories/rollupRepository";
 
 export interface RollupResponse {
   financial_year: number;
@@ -30,10 +29,7 @@ export async function calculateRollup(
   client: PoolClient,
   financialYear: number,
 ): Promise<RollupResponse> {
-  const rows: RollupRow[] = await getRollupRows(
-    client,
-    financialYear,
-  );
+  const rows: RollupRow[] = await getRollupRows(client, financialYear);
 
   const scopeTotals = {
     scope_1: new Decimal(0),

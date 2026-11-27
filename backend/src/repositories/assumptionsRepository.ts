@@ -1,5 +1,4 @@
-
-import type { PoolClient } from 'pg';
+import type { PoolClient } from "pg";
 
 export interface EmissionFactor {
   factor_key: string;
@@ -107,12 +106,7 @@ export async function insertFactorHistory(
       reason,
       changed_at
     `,
-    [
-      history.factor_key,
-      history.old_value,
-      history.new_value,
-      history.reason,
-    ],
+    [history.factor_key, history.old_value, history.new_value, history.reason],
   );
 
   return result.rows[0];

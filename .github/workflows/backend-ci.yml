@@ -1,0 +1,106 @@
+
+name: Backend CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci --include=optional
+
+      - name: Build backend
+        working-directory: backend
+        run: npm run build
+
+  integration-tests:
+    name: Backend integration tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: scenova_user
+          POSTGRES_PASSWORD: ci_admin_password
+          POSTGRES_DB: scenova
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U scenova_user -d scenova"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci --include=optional
+
+      - name: Apply database migrations
+        env:
+          PGPASSWORD: ci_admin_password
+        run: |
+          psql -h localhost -U scenova_user -d scenova -v ON_ERROR_STOP=1 -f database/migrations/001_create_core_tables.sql
+          psql -h localhost -U scenova_user -d scenova -v ON_ERROR_STOP=1 -f database/migrations/002_database_security.sql
+          psql -h localhost -U scenova_user -d scenova -v ON_ERROR_STOP=1 -f database/migrations/003_add_activity_emissions_snapshot.sql
+
+      - name: Configure application database password
+        env:
+          PGPASSWORD: ci_admin_password
+        run: |
+          psql -h localhost -U scenova_user -d scenova -v ON_ERROR_STOP=1 -c "ALTER ROLE scenova_app WITH PASSWORD 'ci_app_password';"
+
+      - name: Seed reference data
+        env:
+          PGPASSWORD: ci_admin_password
+        run: |
+          psql -h localhost -U scenova_user -d scenova -v ON_ERROR_STOP=1 -f database/seeds/001_reference_data.sql
+
+      - name: Build backend
+        working-directory: backend
+        run: npm run build
+
+      - name: Run backend tests
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://scenova_app:ci_app_password@localhost:5432/scenova
+          JWT_SECRET: ci_only_test_secret_replace_with_long_random_value
+          NODE_ENV: test
+        run: npm test

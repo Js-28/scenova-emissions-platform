@@ -1,5 +1,4 @@
-
-import type { PoolClient } from 'pg';
+import type { PoolClient } from "pg";
 
 export interface RollupRow {
   scope: number;

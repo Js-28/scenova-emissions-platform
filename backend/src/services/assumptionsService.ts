@@ -1,6 +1,5 @@
-
-import type { PoolClient } from 'pg';
-import Decimal from 'decimal.js';
+import type { PoolClient } from "pg";
+import Decimal from "decimal.js";
 
 import {
   getEmissionFactors,
@@ -9,11 +8,18 @@ import {
   insertFactorHistory,
   type EmissionFactor,
   type FactorHistoryRecord,
-} from '../repositories/assumptionsRepository';
+} from "../repositories/assumptionsRepository";
+
+// export interface UpdateFactorInput {
+//   factor_key: string;
+//   new_value: string;
+//   reason: string;
+// }
 
 export interface UpdateFactorInput {
   factor_key: string;
   new_value: string;
+  expected_value: string;
   reason: string;
 }
 
@@ -35,11 +41,11 @@ export async function changeEmissionFactor(
   const newValue = new Decimal(input.new_value);
 
   if (!newValue.isFinite() || newValue.isNegative()) {
-    throw new Error('Emission factor must be a valid non-negative decimal.');
+    throw new Error("Emission factor must be a valid non-negative decimal.");
   }
 
   if (newValue.decimalPlaces() > 10) {
-    throw new Error('Emission factor cannot have more than 10 decimal places.');
+    throw new Error("Emission factor cannot have more than 10 decimal places.");
   }
 
   const currentFactor = await findEmissionFactorForUpdate(
@@ -48,13 +54,34 @@ export async function changeEmissionFactor(
   );
 
   if (!currentFactor) {
-    throw new Error('Emission factor not found.');
+    throw new Error("Emission factor not found.");
   }
 
+  //   const oldValue = new Decimal(currentFactor.tco2e_per_unit);
+
+  //   if (oldValue.equals(newValue)) {
+  //     throw new Error('The new emission factor is the same as the current value.');
+  //   }
+
   const oldValue = new Decimal(currentFactor.tco2e_per_unit);
+  const expectedValue = new Decimal(input.expected_value);
+
+  if (!expectedValue.isFinite() || expectedValue.isNegative()) {
+    throw new Error(
+      "Expected emission factor must be a valid non-negative decimal.",
+    );
+  }
+
+  if (!oldValue.equals(expectedValue)) {
+    throw new Error(
+      "Emission factor has changed since it was loaded. Refresh and try again.",
+    );
+  }
 
   if (oldValue.equals(newValue)) {
-    throw new Error('The new emission factor is the same as the current value.');
+    throw new Error(
+      "The new emission factor is the same as the current value.",
+    );
   }
 
   const updatedFactor = await updateEmissionFactor(
@@ -64,7 +91,7 @@ export async function changeEmissionFactor(
   );
 
   if (!updatedFactor) {
-    throw new Error('Emission factor could not be updated.');
+    throw new Error("Emission factor could not be updated.");
   }
 
   const history = await insertFactorHistory(client, {

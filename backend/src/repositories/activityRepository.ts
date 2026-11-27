@@ -1,5 +1,4 @@
-
-import type { PoolClient } from 'pg';
+import type { PoolClient } from "pg";
 
 export interface EmissionFactor {
   factor_key: string;
@@ -19,7 +18,6 @@ export interface NewActivity {
   factor_value: string;
   emissions_tco2e: string;
 }
-
 
 /**
  * Retrieves an emission factor belonging to the current tenant.
